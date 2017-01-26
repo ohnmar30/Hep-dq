@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+	<!-- ===================== Configurations ===================== -->
+
+	<bean id="chaidq.config.report" class="org.openmrs.module.chaicore.report.ReportConfiguration">
+		<property name="commonReports">
+			<set>
+				<ref bean="chaidq.common.report.missingMaritalStatus" />
+			</set>
+		</property>
+		<property name="programReports">
+			<map>
+				<entry key-ref="chaiemr.hiv.program">
+					<set>
+						<ref bean="chaidq.hiv.report.missingEntryPoint" />
+						<ref bean="chaidq.hiv.report.missingConfirmedPositiveDate" />
+					</set>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<!-- ===================== Apps ===================== -->
+
+	<bean id="chaidq.app.dataqual" factory-bean="chaicore.appFactoryBean" factory-method="createInstance">
+		<constructor-arg value="chaidq.dataQuality" />
+		<constructor-arg value="Data Quality" />
+		<constructor-arg value="chaidq/dataqual/dataQualityHome.page" />
+		<constructor-arg value="chaidq:apps/dataqual.png" />
+		<constructor-arg value="525" />
+	</bean>
+
+	<bean id="chaidq.app.datamgr" factory-bean="chaicore.appFactoryBean" factory-method="createInstance">
+		<constructor-arg value="chaidq.dataManager" />
+		<constructor-arg value="Data Manager" />
+		<constructor-arg value="chaidq/datamgr/dataManagerHome.page" />
+		<constructor-arg value="chaidq:apps/datamgr.png" />
+		<constructor-arg value="550" />
+	</bean>
+
+	<!-- ===================== Common reports ===================== -->
+
+	<bean id="chaidq.common.report.missingMaritalStatus" class="org.openmrs.module.chaicore.report.CalculationReportDescriptor">
+		<property name="targetUuid" value="df9c0a99-7b85-4353-b8c4-864eaa80b974" />
+		<property name="name" value="Missing marital status" />
+		<property name="calculation" value="org.openmrs.module.chaidq.calculation.common.MissingMaritalStatusCalculation" />
+		<property name="apps"><set><ref bean="chaidq.app.dataqual" /></set></property>
+	</bean>
+
+	<!-- ===================== HIV reports ===================== -->
+
+	<bean id="chaidq.hiv.report.missingEntryPoint" class="org.openmrs.module.chaicore.report.CalculationReportDescriptor">
+		<property name="targetUuid" value="219b12af-bcde-48a8-a77c-58fd41d80c81" />
+		<property name="name" value="Missing entry point" />
+		<property name="calculation" value="org.openmrs.module.chaidq.calculation.hiv.MissingEntryPointCalculation" />
+		<property name="apps"><set><ref bean="chaidq.app.dataqual" /></set></property>
+	</bean>
+
+	<bean id="chaidq.hiv.report.missingConfirmedPositiveDate" class="org.openmrs.module.chaicore.report.CalculationReportDescriptor">
+		<property name="targetUuid" value="0f72a67e-ba2c-48da-bbc1-377ebb0b8442" />
+		<property name="name" value="Missing date confirmed HIV+" />
+		<property name="calculation" value="org.openmrs.module.chaidq.calculation.hiv.MissingHivConfirmedDateCalculation" />
+		<property name="apps"><set><ref bean="chaidq.app.dataqual" /></set></property>
+	</bean>
+
+	<!-- ===================== Module service ===================== -->
+
+	<bean id="chaiDqService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager">
+			<ref bean="transactionManager" />
+		</property>
+		<property name="target">
+			<bean class="org.openmrs.module.chaidq.api.impl.ChaiDqServiceImpl" />
+		</property>
+		<property name="preInterceptors">
+			<ref bean="serviceInterceptors" />
+		</property>
+		<property name="transactionAttributeSource">
+			<ref bean="transactionAttributeSource" />
+		</property>
+	</bean>
+
+	<!-- Register service with OpenMRS -->
+
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list>
+				<value>org.openmrs.module.chaidq.api.ChaiDqService</value>
+				<ref local="chaiDqService"/>
+			</list>
+		</property>
+	</bean>
+
+</beans>
